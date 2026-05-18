@@ -1,0 +1,300 @@
+{
+  "common": {
+    "siteName": "Nella@House Consulting",
+    "tagline": "L'élégance africaine à portée de main",
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "viewAll": "Voir tout",
+    "backToHome": "Retour à l'accueil",
+    "currency": "EUR",
+    "currencySymbol": "€"
+  },
+  "nav": {
+    "home": "Accueil",
+    "shop": "Boutique",
+    "categories": "Catégories",
+    "artisans": "Nos Artisans",
+    "about": "À Propos",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "cart": "Panier",
+    "account": "Mon Compte",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "register": "S'inscrire",
+    "admin": "Administration",
+    "advisor": "Espace Conseiller"
+  },
+  "home": {
+    "hero": {
+      "title": "L'Art de la Mode Africaine",
+      "subtitle": "Découvrez des créations uniques, faites main par nos artisans talentueux",
+      "cta": "Découvrir la Collection"
+    },
+    "featured": {
+      "title": "Produits Vedettes",
+      "subtitle": "Nos pièces les plus appréciées"
+    },
+    "categories": {
+      "title": "Nos Catégories",
+      "subtitle": "Explorez notre univers"
+    },
+    "artisans": {
+      "title": "Rencontrez Nos Artisans",
+      "subtitle": "Les mains talentueuses derrière chaque création"
+    },
+    "testimonials": {
+      "title": "Ce Que Disent Nos Clients",
+      "subtitle": "Des avis authentiques de notre communauté"
+    },
+    "newsletter": {
+      "title": "Restez Informé",
+      "subtitle": "Inscrivez-vous pour recevoir nos dernières collections et offres exclusives",
+      "placeholder": "Votre adresse email",
+      "submit": "S'inscrire"
+    }
+  },
+  "products": {
+    "title": "Notre Collection",
+    "subtitle": "Découvrez notre sélection de vêtements et accessoires africains",
+    "filters": {
+      "title": "Filtres",
+      "category": "Catégorie",
+      "price": "Prix",
+      "size": "Taille",
+      "color": "Couleur",
+      "origin": "Origine",
+      "clear": "Effacer les filtres"
+    },
+    "sort": {
+      "newest": "Plus récents",
+      "priceAsc": "Prix croissant",
+      "priceDesc": "Prix décroissant",
+      "popular": "Populaires"
+    },
+    "noResults": "Aucun produit trouvé",
+    "addToCart": "Ajouter au panier",
+    "addedToCart": "Ajouté au panier",
+    "outOfStock": "Rupture de stock",
+    "inStock": "En stock",
+    "details": {
+      "description": "Description",
+      "materials": "Matériaux",
+      "care": "Entretien",
+      "shipping": "Livraison",
+      "reviews": "Avis",
+      "similar": "Vous aimerez aussi"
+    },
+    "selectSize": "Sélectionnez une taille",
+    "selectColor": "Sélectionnez une couleur",
+    "quantity": "Quantité"
+  },
+  "cart": {
+    "title": "Votre Panier",
+    "empty": "Votre panier est vide",
+    "continueShopping": "Continuer mes achats",
+    "subtotal": "Sous-total",
+    "shipping": "Frais de livraison",
+    "total": "Total",
+    "checkout": "Passer la commande",
+    "remove": "Retirer",
+    "update": "Mettre à jour"
+  },
+  "checkout": {
+    "title": "Finaliser la Commande",
+    "steps": {
+      "address": "Adresse",
+      "shipping": "Livraison",
+      "payment": "Paiement",
+      "confirmation": "Confirmation"
+    },
+    "address": {
+      "title": "Adresse de Livraison",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "phone": "Téléphone",
+      "line1": "Adresse",
+      "line2": "Complément d'adresse",
+      "city": "Ville",
+      "postalCode": "Code postal",
+      "country": "Pays"
+    },
+    "shipping": {
+      "title": "Mode de Livraison",
+      "standard": "Livraison standard",
+      "express": "Livraison express",
+      "estimatedDelivery": "Livraison estimée"
+    },
+    "payment": {
+      "title": "Paiement",
+      "card": "Carte bancaire",
+      "paypal": "PayPal",
+      "secure": "Paiement 100% sécurisé"
+    },
+    "success": {
+      "title": "Commande Confirmée !",
+      "message": "Merci pour votre commande. Vous recevrez un email de confirmation sous peu.",
+      "orderNumber": "Numéro de commande"
+    }
+  },
+  "account": {
+    "title": "Mon Compte",
+    "dashboard": "Tableau de bord",
+    "profile": "Mon Profil",
+    "addresses": "Mes Adresses",
+    "orders": "Mes Commandes",
+    "favorites": "Mes Favoris",
+    "consultations": "Mes Consultations Style",
+    "messages": "Mes Messages",
+    "settings": "Paramètres"
+  },
+  "orders": {
+    "title": "Mes Commandes",
+    "empty": "Vous n'avez pas encore de commande",
+    "orderNumber": "Commande N°",
+    "date": "Date",
+    "status": "Statut",
+    "total": "Total",
+    "details": "Voir les détails",
+    "statuses": {
+      "pending": "En attente",
+      "confirmed": "Confirmée",
+      "processing": "En préparation",
+      "shipped": "Expédiée",
+      "delivered": "Livrée",
+      "cancelled": "Annulée"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "email": "Email",
+      "password": "Mot de passe",
+      "submit": "Se connecter",
+      "forgotPassword": "Mot de passe oublié ?",
+      "noAccount": "Pas encore de compte ?",
+      "register": "Créer un compte"
+    },
+    "register": {
+      "title": "Créer un Compte",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "S'inscrire",
+      "hasAccount": "Déjà un compte ?",
+      "login": "Se connecter",
+      "success": "Inscription réussie ! Vérifiez votre email pour confirmer votre compte."
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "email": "Email",
+      "submit": "Envoyer le lien",
+      "success": "Un email de réinitialisation a été envoyé."
+    }
+  },
+  "artisans": {
+    "title": "Nos Artisans",
+    "subtitle": "Découvrez les créateurs derrière nos collections uniques",
+    "from": "De",
+    "specialty": "Spécialité",
+    "viewProducts": "Voir ses créations"
+  },
+  "about": {
+    "title": "À Propos de Nella@House",
+    "mission": {
+      "title": "Notre Mission",
+      "description": "Promouvoir l'artisanat africain et connecter les créateurs talentueux du continent avec une clientèle mondiale."
+    },
+    "values": {
+      "title": "Nos Valeurs",
+      "authenticity": "Authenticité",
+      "quality": "Qualité",
+      "sustainability": "Durabilité",
+      "fairTrade": "Commerce équitable"
+    }
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "subtitle": "Une question ? Nous sommes là pour vous aider.",
+    "form": {
+      "name": "Nom",
+      "email": "Email",
+      "subject": "Sujet",
+      "message": "Message",
+      "submit": "Envoyer"
+    },
+    "info": {
+      "address": "Adresse",
+      "phone": "Téléphone",
+      "email": "Email",
+      "hours": "Horaires"
+    }
+  },
+  "footer": {
+    "company": "L'Entreprise",
+    "support": "Support",
+    "legal": "Mentions Légales",
+    "social": "Suivez-nous",
+    "newsletter": "Newsletter",
+    "copyright": "© {year} Nella@House Consulting. Tous droits réservés."
+  },
+  "admin": {
+    "title": "Administration",
+    "dashboard": "Tableau de bord",
+    "products": "Produits",
+    "categories": "Catégories",
+    "orders": "Commandes",
+    "users": "Utilisateurs",
+    "artisans": "Artisans",
+    "reviews": "Avis",
+    "promotions": "Promotions",
+    "shipping": "Livraison",
+    "settings": "Paramètres",
+    "stats": {
+      "totalSales": "Ventes totales",
+      "orders": "Commandes",
+      "customers": "Clients",
+      "products": "Produits"
+    }
+  },
+  "advisor": {
+    "title": "Espace Conseiller Style",
+    "dashboard": "Tableau de bord",
+    "consultations": "Consultations",
+    "messages": "Messages",
+    "clients": "Mes Clients"
+  },
+  "consultation": {
+    "title": "Consultation Style",
+    "book": "Réserver une consultation",
+    "types": {
+      "virtual": "Consultation virtuelle",
+      "inPerson": "En personne"
+    },
+    "statuses": {
+      "pending": "En attente",
+      "confirmed": "Confirmée",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    }
+  },
+  "reviews": {
+    "title": "Avis Clients",
+    "writeReview": "Écrire un avis",
+    "rating": "Note",
+    "comment": "Commentaire",
+    "submit": "Publier",
+    "noReviews": "Aucun avis pour le moment"
+  }
+}

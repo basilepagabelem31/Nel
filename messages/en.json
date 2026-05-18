@@ -1,0 +1,300 @@
+{
+  "common": {
+    "siteName": "Nella@House Consulting",
+    "tagline": "African Elegance at Your Fingertips",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "viewAll": "View All",
+    "backToHome": "Back to Home",
+    "currency": "EUR",
+    "currencySymbol": "€"
+  },
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "categories": "Categories",
+    "artisans": "Our Artisans",
+    "about": "About",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "cart": "Cart",
+    "account": "My Account",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "admin": "Admin",
+    "advisor": "Advisor Space"
+  },
+  "home": {
+    "hero": {
+      "title": "The Art of African Fashion",
+      "subtitle": "Discover unique creations, handmade by our talented artisans",
+      "cta": "Explore the Collection"
+    },
+    "featured": {
+      "title": "Featured Products",
+      "subtitle": "Our most beloved pieces"
+    },
+    "categories": {
+      "title": "Our Categories",
+      "subtitle": "Explore our universe"
+    },
+    "artisans": {
+      "title": "Meet Our Artisans",
+      "subtitle": "The talented hands behind each creation"
+    },
+    "testimonials": {
+      "title": "What Our Customers Say",
+      "subtitle": "Authentic reviews from our community"
+    },
+    "newsletter": {
+      "title": "Stay Informed",
+      "subtitle": "Subscribe to receive our latest collections and exclusive offers",
+      "placeholder": "Your email address",
+      "submit": "Subscribe"
+    }
+  },
+  "products": {
+    "title": "Our Collection",
+    "subtitle": "Discover our selection of African clothing and accessories",
+    "filters": {
+      "title": "Filters",
+      "category": "Category",
+      "price": "Price",
+      "size": "Size",
+      "color": "Color",
+      "origin": "Origin",
+      "clear": "Clear filters"
+    },
+    "sort": {
+      "newest": "Newest",
+      "priceAsc": "Price: Low to High",
+      "priceDesc": "Price: High to Low",
+      "popular": "Popular"
+    },
+    "noResults": "No products found",
+    "addToCart": "Add to Cart",
+    "addedToCart": "Added to Cart",
+    "outOfStock": "Out of Stock",
+    "inStock": "In Stock",
+    "details": {
+      "description": "Description",
+      "materials": "Materials",
+      "care": "Care",
+      "shipping": "Shipping",
+      "reviews": "Reviews",
+      "similar": "You May Also Like"
+    },
+    "selectSize": "Select a size",
+    "selectColor": "Select a color",
+    "quantity": "Quantity"
+  },
+  "cart": {
+    "title": "Your Cart",
+    "empty": "Your cart is empty",
+    "continueShopping": "Continue Shopping",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "total": "Total",
+    "checkout": "Checkout",
+    "remove": "Remove",
+    "update": "Update"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "steps": {
+      "address": "Address",
+      "shipping": "Shipping",
+      "payment": "Payment",
+      "confirmation": "Confirmation"
+    },
+    "address": {
+      "title": "Shipping Address",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "phone": "Phone",
+      "line1": "Address",
+      "line2": "Address Line 2",
+      "city": "City",
+      "postalCode": "Postal Code",
+      "country": "Country"
+    },
+    "shipping": {
+      "title": "Shipping Method",
+      "standard": "Standard Shipping",
+      "express": "Express Shipping",
+      "estimatedDelivery": "Estimated Delivery"
+    },
+    "payment": {
+      "title": "Payment",
+      "card": "Credit Card",
+      "paypal": "PayPal",
+      "secure": "100% Secure Payment"
+    },
+    "success": {
+      "title": "Order Confirmed!",
+      "message": "Thank you for your order. You will receive a confirmation email shortly.",
+      "orderNumber": "Order Number"
+    }
+  },
+  "account": {
+    "title": "My Account",
+    "dashboard": "Dashboard",
+    "profile": "My Profile",
+    "addresses": "My Addresses",
+    "orders": "My Orders",
+    "favorites": "My Favorites",
+    "consultations": "My Style Consultations",
+    "messages": "My Messages",
+    "settings": "Settings"
+  },
+  "orders": {
+    "title": "My Orders",
+    "empty": "You have no orders yet",
+    "orderNumber": "Order #",
+    "date": "Date",
+    "status": "Status",
+    "total": "Total",
+    "details": "View Details",
+    "statuses": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign In",
+      "forgotPassword": "Forgot Password?",
+      "noAccount": "Don't have an account?",
+      "register": "Create Account"
+    },
+    "register": {
+      "title": "Create Account",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Sign Up",
+      "hasAccount": "Already have an account?",
+      "login": "Sign In",
+      "success": "Registration successful! Check your email to confirm your account."
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "email": "Email",
+      "submit": "Send Reset Link",
+      "success": "A password reset email has been sent."
+    }
+  },
+  "artisans": {
+    "title": "Our Artisans",
+    "subtitle": "Discover the creators behind our unique collections",
+    "from": "From",
+    "specialty": "Specialty",
+    "viewProducts": "View Creations"
+  },
+  "about": {
+    "title": "About Nella@House",
+    "mission": {
+      "title": "Our Mission",
+      "description": "To promote African craftsmanship and connect talented creators from the continent with a global clientele."
+    },
+    "values": {
+      "title": "Our Values",
+      "authenticity": "Authenticity",
+      "quality": "Quality",
+      "sustainability": "Sustainability",
+      "fairTrade": "Fair Trade"
+    }
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Have a question? We're here to help.",
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "subject": "Subject",
+      "message": "Message",
+      "submit": "Send"
+    },
+    "info": {
+      "address": "Address",
+      "phone": "Phone",
+      "email": "Email",
+      "hours": "Hours"
+    }
+  },
+  "footer": {
+    "company": "Company",
+    "support": "Support",
+    "legal": "Legal",
+    "social": "Follow Us",
+    "newsletter": "Newsletter",
+    "copyright": "© {year} Nella@House Consulting. All rights reserved."
+  },
+  "admin": {
+    "title": "Admin",
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "categories": "Categories",
+    "orders": "Orders",
+    "users": "Users",
+    "artisans": "Artisans",
+    "reviews": "Reviews",
+    "promotions": "Promotions",
+    "shipping": "Shipping",
+    "settings": "Settings",
+    "stats": {
+      "totalSales": "Total Sales",
+      "orders": "Orders",
+      "customers": "Customers",
+      "products": "Products"
+    }
+  },
+  "advisor": {
+    "title": "Style Advisor Space",
+    "dashboard": "Dashboard",
+    "consultations": "Consultations",
+    "messages": "Messages",
+    "clients": "My Clients"
+  },
+  "consultation": {
+    "title": "Style Consultation",
+    "book": "Book a Consultation",
+    "types": {
+      "virtual": "Virtual Consultation",
+      "inPerson": "In Person"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "reviews": {
+    "title": "Customer Reviews",
+    "writeReview": "Write a Review",
+    "rating": "Rating",
+    "comment": "Comment",
+    "submit": "Submit",
+    "noReviews": "No reviews yet"
+  }
+}
