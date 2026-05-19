@@ -49,7 +49,7 @@ export function AddCategoryDialog({ categories }: AddCategoryDialogProps) {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    parent_id: "none",
+    parent_id: "none", // Changé: utiliser "none" au lieu de ""
     sort_order: 0,
     is_active: true,
   })
@@ -62,16 +62,30 @@ export function AddCategoryDialog({ categories }: AddCategoryDialogProps) {
 
     startTransition(async () => {
       const supabase = createClient()
+      
+      const slug = slugify(form.name)
+      const { data: existing } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle()
+
+      if (existing) {
+        toast.error("Une catégorie avec ce nom existe déjà")
+        return
+      }
+
       const { error } = await supabase.from("categories").insert({
         name: form.name.trim(),
-        slug: slugify(form.name),
+        slug: slug,
         description: form.description || null,
-        parent_id: form.parent_id === "none" ? null : form.parent_id,
+        parent_id: form.parent_id === "none" ? null : form.parent_id, // Convertir "none" en null
         sort_order: form.sort_order,
         is_active: form.is_active,
       })
 
       if (error) {
+        console.error("Erreur:", error)
         toast.error(error.message.includes("unique") ? "Ce nom de catégorie existe déjà" : "Erreur lors de la création")
         return
       }
@@ -91,7 +105,7 @@ export function AddCategoryDialog({ categories }: AddCategoryDialogProps) {
           Nouvelle catégorie
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Créer une catégorie</DialogTitle>
         </DialogHeader>
@@ -99,7 +113,7 @@ export function AddCategoryDialog({ categories }: AddCategoryDialogProps) {
           <div className="space-y-1.5">
             <Label>Nom <span className="text-destructive">*</span></Label>
             <Input
-              placeholder="Ex: Bazin, Soies..."
+              placeholder="Ex: Bazin, Soies, Robes..."
               value={form.name}
               onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
             />
@@ -108,7 +122,7 @@ export function AddCategoryDialog({ categories }: AddCategoryDialogProps) {
             )}
           </div>
           <div className="space-y-1.5">
-            <Label>Description</Label>
+            <Label>Description (optionnelle)</Label>
             <Textarea
               placeholder="Description de la catégorie..."
               value={form.description}
@@ -124,11 +138,18 @@ export function AddCategoryDialog({ categories }: AddCategoryDialogProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Aucune (catégorie racine)</SelectItem>
-                {categories.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
+                {categories && categories.length > 0 ? (
+                  categories.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-categories" disabled>Aucune catégorie existante</SelectItem>
+                )}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              Sélectionnez une catégorie parente pour créer une sous-catégorie.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label>Ordre d'affichage</Label>
@@ -138,6 +159,9 @@ export function AddCategoryDialog({ categories }: AddCategoryDialogProps) {
               onChange={(e) => setForm(f => ({ ...f, sort_order: parseInt(e.target.value) || 0 }))}
               min={0}
             />
+            <p className="text-xs text-muted-foreground">
+              Plus le chiffre est petit, plus la catégorie apparaît en premier.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Switch

@@ -3,14 +3,22 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
+
+// Générer un numéro de commande unique
+function generateOrderNumber(): string {
+  const year = new Date().getFullYear()
+  const random = Math.floor(Math.random() * 9000) + 1000
+  return `NH-${year}-${random}`
+}
 
 // Ajouter un article au panier
-export async function addToCart(productId: string, quantity: number = 1, variantId?: string) {
+export async function addToCart(productId: string, quantity: number = 1, variantId?: string, redirectToCart: boolean = false) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: "Vous devez être connecté pour ajouter au panier" }
+    return { error: "Vous devez être connecté pour ajouter au panier", redirectToLogin: true }
   }
 
   // Récupérer ou créer un panier
@@ -39,7 +47,7 @@ export async function addToCart(productId: string, quantity: number = 1, variant
   // Récupérer le prix du produit
   const { data: product } = await supabase
     .from("products")
-    .select("base_price, discount_price, stock_quantity")
+    .select("base_price, discount_price, stock_quantity, name")
     .eq("id", productId)
     .single()
 
@@ -79,6 +87,13 @@ export async function addToCart(productId: string, quantity: number = 1, variant
   }
 
   revalidatePath("/panier")
+  revalidatePath("/")
+  
+  // Rediriger vers le panier si demandé
+  if (redirectToCart) {
+    redirect("/panier")
+  }
+  
   return { success: true }
 }
 
@@ -118,4 +133,29 @@ export async function updateCartItemQuantity(cartItemId: string, quantity: numbe
 
   revalidatePath("/panier")
   return { success: true }
+}
+
+// Récupérer le nombre d'articles dans le panier
+export async function getCartCount() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return 0
+
+  const { data: cart } = await supabase
+    .from("carts")
+    .select("id")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single()
+
+  if (!cart) return 0
+
+  const { data: items } = await supabase
+    .from("cart_items")
+    .select("quantity")
+    .eq("cart_id", cart.id)
+
+  return items?.reduce((sum, item) => sum + item.quantity, 0) || 0
 }

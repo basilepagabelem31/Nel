@@ -107,21 +107,21 @@ export async function updateProduct(productId: string, formData: FormData) {
 }
 
 // Supprimer un produit
-export async function deleteProduct(productId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: "Non autorisé" }
+// export async function deleteProduct(productId: string) {
+//   const supabase = await createClient()
+//   const { data: { user } } = await supabase.auth.getUser()
+//   if (!user) return { error: "Non autorisé" }
 
-  const { error } = await supabase
-    .from("products")
-    .delete()
-    .eq("id", productId)
+//   const { error } = await supabase
+//     .from("products")
+//     .delete()
+//     .eq("id", productId)
 
-  if (error) return { error: "Impossible de supprimer" }
+//   if (error) return { error: "Impossible de supprimer" }
 
-  revalidatePath("/admin/products")
-  return { success: true }
-}
+//   revalidatePath("/admin/products")
+//   return { success: true }
+// }
 
 // Changer le statut d'un produit
 export async function updateProductStatus(productId: string, status: "draft" | "published" | "archived") {
@@ -135,5 +135,43 @@ export async function updateProductStatus(productId: string, status: "draft" | "
   if (error) return { error: "Impossible de mettre à jour" }
 
   revalidatePath("/admin/products")
+  return { success: true }
+}
+
+
+
+
+
+
+
+
+
+// Chemin : lib/actions/products.ts (ajoutez cette fonction)
+export async function deleteProduct(productId: string) {
+  const supabase = await createClient()
+  
+  // Récupérer les images pour les supprimer du storage
+  const { data: images } = await supabase
+    .from("product_images")
+    .select("url")
+    .eq("product_id", productId)
+
+  // Supprimer les images du storage
+  if (images) {
+    for (const image of images) {
+      const path = image.url.split("/").pop()
+      if (path) {
+        await supabase.storage.from("product-images").remove([`products/${path}`])
+      }
+    }
+  }
+
+  // Supprimer le produit (les images seront supprimées en cascade)
+  const { error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", productId)
+
+  if (error) return { error: error.message }
   return { success: true }
 }

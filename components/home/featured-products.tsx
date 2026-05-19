@@ -1,8 +1,12 @@
+// Chemin : components/home/featured-products.tsx
 import Link from "next/link"
 import Image from "next/image"
-import { Heart, ShoppingBag, Star } from "lucide-react"
+import { Heart, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { FeaturedProductCardClient } from "./featured-product-card-client"
+import { FavoriteButton } from "@/components/ui/favorite-button"
+
 
 interface Product {
   id: string
@@ -25,9 +29,9 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-2">Pieces Vedettes</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-2">Pièces Vedettes</h2>
             <p className="text-muted-foreground">
-              Notre selection des plus belles creations africaines
+              Notre sélection des plus belles créations africaines
             </p>
           </div>
           <Link href="/catalogue?featured=true">
@@ -78,18 +82,15 @@ function ProductCard({ product }: { product: Product }) {
 
         {/* Quick Actions */}
         <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-md">
-            <Heart className="h-4 w-4" />
-            <span className="sr-only">Ajouter aux favoris</span>
-          </Button>
-        </div>
+  <FavoriteButton productId={product.id} />
+</div>
 
         {/* Add to Cart */}
         <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button className="w-full gap-2 shadow-md">
-            <ShoppingBag className="h-4 w-4" />
-            Ajouter au panier
-          </Button>
+          <FeaturedProductCardClient 
+            productId={product.id} 
+            productName={product.name}
+          />
         </div>
       </div>
 

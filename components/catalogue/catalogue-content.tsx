@@ -1,10 +1,14 @@
+// Chemin : components/catalogue/catalogue-content.tsx
 import Link from "next/link"
 import Image from "next/image"
-import { Heart, ShoppingBag, Star } from "lucide-react"
+import { Heart, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/server"
+import { ProductCardClient } from "./product-card-client"
+import { FavoriteButton } from "@/components/ui/favorite-button"
+
 
 interface CatalogueContentProps {
   searchParams: { [key: string]: string | string[] | undefined }
@@ -76,7 +80,7 @@ export async function CatalogueContent({ searchParams }: CatalogueContentProps) 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <p className="text-muted-foreground">
-          {products?.length || 0} produit{(products?.length || 0) > 1 ? "s" : ""} trouve{(products?.length || 0) > 1 ? "s" : ""}
+          {products?.length || 0} produit{(products?.length || 0) > 1 ? "s" : ""} trouvé{(products?.length || 0) > 1 ? "s" : ""}
         </p>
         
         <div className="flex items-center gap-2">
@@ -86,9 +90,9 @@ export async function CatalogueContent({ searchParams }: CatalogueContentProps) 
               <SelectValue placeholder="Trier par" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Plus recents</SelectItem>
+              <SelectItem value="newest">Plus récents</SelectItem>
               <SelectItem value="price-asc">Prix croissant</SelectItem>
-              <SelectItem value="price-desc">Prix decroissant</SelectItem>
+              <SelectItem value="price-desc">Prix décroissant</SelectItem>
               <SelectItem value="name">Nom A-Z</SelectItem>
             </SelectContent>
           </Select>
@@ -104,7 +108,7 @@ export async function CatalogueContent({ searchParams }: CatalogueContentProps) 
         </div>
       ) : (
         <div className="text-center py-16">
-          <p className="text-muted-foreground mb-4">Aucun produit trouve</p>
+          <p className="text-muted-foreground mb-4">Aucun produit trouvé</p>
           <Link href="/catalogue">
             <Button variant="outline">Voir tous les produits</Button>
           </Link>
@@ -148,19 +152,16 @@ function ProductCard({ product }: { product: any }) {
         </div>
 
         {/* Quick Actions */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-md">
-            <Heart className="h-4 w-4" />
-            <span className="sr-only">Ajouter aux favoris</span>
-          </Button>
-        </div>
+      <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+  <FavoriteButton productId={product.id} />
+</div>
 
-        {/* Add to Cart */}
+        {/* Add to Cart - Utilisation du composant client */}
         <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button className="w-full gap-2 shadow-md">
-            <ShoppingBag className="h-4 w-4" />
-            Ajouter au panier
-          </Button>
+          <ProductCardClient 
+            productId={product.id} 
+            productName={product.name}
+          />
         </div>
       </div>
 

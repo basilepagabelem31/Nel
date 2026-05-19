@@ -1,218 +1,198 @@
+// Chemin : components/layout/header.tsx
 "use client"
 
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
-import { ShoppingBag, User, Menu, Heart, LogOut } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { ShoppingBag, Heart, Menu, User, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { cn } from "@/lib/utils"
+import { useCart } from "@/lib/context/cart-context"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
-
-const navigation = [
-  { name: "Accueil", href: "/" },
-  { name: "Catalogue", href: "/catalogue" },
-  { name: "Robes", href: "/catalogue?category=robes" },
-  { name: "Ensembles", href: "/catalogue?category=ensembles" },
-  { name: "Accessoires", href: "/catalogue?category=accessoires" },
-  { name: "Mariage", href: "/catalogue?category=mariage" },
-  { name: "Consultation", href: "/consultation" },
-]
 
 export function Header() {
-  const [user, setUser] = useState<SupabaseUser | null>(null)
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const supabase = createClient()
-  const router = useRouter()
+  const pathname = usePathname()
+  const { cartCount, refreshCart } = useCart()
+  const [isOpen, setIsOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [notificationCount, setNotificationCount] = useState(0)
 
+  // Récupérer l'utilisateur et les notifications
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
+    const supabase = createClient()
+    
+    const fetchUserAndNotifications = async () => {
+      const { data } = await supabase.auth.getUser()
+      setUser(data.user)
+      
+      if (data.user) {
+        const { data: notifications } = await supabase
+          .from("notifications")
+          .select("id")
+          .eq("user_id", data.user.id)
+          .eq("is_read", false)
+        
+        setNotificationCount(notifications?.length || 0)
+      }
     }
-    getUser()
+    
+    fetchUserAndNotifications()
 
+    // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      setUser(session?.user || null)
+      refreshCart()
     })
 
-    return () => subscription.unsubscribe()
-  }, [supabase.auth])
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10)
+    return () => {
+      subscription.unsubscribe()
     }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+  }, [refreshCart])
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    router.push("/")
-    router.refresh()
-  }
+  // Rafraîchir les notifications périodiquement (alternative à Realtime)
+  useEffect(() => {
+    if (!user) return
+
+    const fetchNotifications = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("is_read", false)
+      
+      setNotificationCount(data?.length || 0)
+    }
+
+    fetchNotifications()
+    
+    // Rafraîchir toutes les 30 secondes
+    const interval = setInterval(fetchNotifications, 30000)
+
+    return () => clearInterval(interval)
+  }, [user])
+
+  const navItems = [
+    { href: "/", label: "Accueil" },
+    { href: "/catalogue", label: "Catalogue" },
+    { href: "/consultation", label: "Conseil" },
+    { href: "/contact", label: "Contact" },
+  ]
 
   return (
-    <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-      isScrolled 
-        ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border" 
-        : "bg-transparent"
-    }`}>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
-        {/* Top bar */}
-        <div className="hidden lg:flex items-center justify-between py-2 text-sm border-b border-border/50">
-          <p className="text-muted-foreground">
-            Livraison disponible | nellahouseconsulting@gmail.com
-          </p>
-          <div className="flex items-center gap-4">
-            <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">
-              À propos
-            </Link>
-            <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">
-              Contact
-            </Link>
-            {user && (
-              <button
-                onClick={handleSignOut}
-                className="text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
-              >
-                <LogOut className="h-3 w-3" />
-                Déconnexion
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Main header */}
-        <div className="flex items-center justify-between h-16 lg:h-20">
-          {/* Mobile menu */}
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80">
-              <div className="flex flex-col gap-6 mt-8">
-                <Link 
-                  href="/" 
-                  className="text-2xl font-bold text-primary"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Nella@House
-                </Link>
-                <nav className="flex flex-col gap-4">
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className="text-lg text-foreground hover:text-primary transition-colors py-2 border-b border-border/50"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                  <Link href="/about" className="text-lg text-foreground hover:text-primary transition-colors py-2 border-b border-border/50" onClick={() => setMobileMenuOpen(false)}>À propos</Link>
-                  <Link href="/contact" className="text-lg text-foreground hover:text-primary transition-colors py-2 border-b border-border/50" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
-                </nav>
-                <div className="flex flex-col gap-3 mt-4">
-                  {user ? (
-                    <>
-                      <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                        <Button className="w-full">Mon Compte</Button>
-                      </Link>
-                      <Button variant="outline" className="w-full gap-2 text-destructive hover:text-destructive" onClick={() => { handleSignOut(); setMobileMenuOpen(false) }}>
-                        <LogOut className="h-4 w-4" />
-                        Déconnexion
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
-                        <Button variant="outline" className="w-full">Connexion</Button>
-                      </Link>
-                      <Link href="/auth/sign-up" onClick={() => setMobileMenuOpen(false)}>
-                        <Button className="w-full">Créer un compte</Button>
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-
+        <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">N</span>
-            </div>
-            <span className="text-xl lg:text-2xl font-bold text-foreground">
-              Nella<span className="text-primary">@House</span>
-            </span>
+          <Link href="/" className="text-xl font-bold">
+            Nella@House
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {navigation.slice(0, 6).map((item) => (
+          <nav className="hidden md:flex items-center gap-6">
+            {navItems.map((item) => (
               <Link
-                key={item.name}
+                key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors relative group"
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary",
+                  pathname === item.href
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                )}
               >
-                {item.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
+                {item.label}
               </Link>
             ))}
           </nav>
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            {/* Notifications */}
+            <Link href="/dashboard/notifications">
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+                    {notificationCount > 9 ? "9+" : notificationCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+
+            {/* Favoris */}
             {user && (
               <Link href="/dashboard/favorites">
                 <Button variant="ghost" size="icon">
                   <Heart className="h-5 w-5" />
-                  <span className="sr-only">Favoris</span>
                 </Button>
               </Link>
             )}
-            
+
+            {/* Panier */}
             <Link href="/panier">
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingBag className="h-5 w-5" />
-                <span className="sr-only">Panier</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
               </Button>
             </Link>
 
+            {/* User / Login */}
             {user ? (
-              <div className="hidden sm:flex items-center gap-2">
-                <Link href="/dashboard">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <User className="h-4 w-4" />
-                    <span className="hidden md:inline">Mon Compte</span>
-                  </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="gap-2 text-muted-foreground hover:text-destructive hidden md:flex"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden lg:inline">Déconnexion</span>
+              <Link href="/dashboard">
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
                 </Button>
-              </div>
+              </Link>
             ) : (
-              <Link href="/auth/login" className="hidden sm:block">
-                <Button size="sm" className="gap-2">
-                  <User className="h-4 w-4" />
-                  <span className="hidden md:inline">Connexion</span>
+              <Link href="/auth/login">
+                <Button variant="default" size="sm">
+                  Se connecter
                 </Button>
               </Link>
             )}
+
+            {/* Mobile Menu Button */}
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild className="md:hidden">
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <nav className="flex flex-col gap-4 mt-8">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className={cn(
+                        "text-sm font-medium transition-colors hover:text-primary py-2",
+                        pathname === item.href
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                  {!user && (
+                    <Link
+                      href="/auth/login"
+                      onClick={() => setIsOpen(false)}
+                      className="text-sm font-medium text-primary py-2"
+                    >
+                      Se connecter
+                    </Link>
+                  )}
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>

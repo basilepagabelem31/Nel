@@ -70,7 +70,7 @@ export default function AboutPage() {
                 une histoire — celle de l'Afrique dans toute sa diversité et sa beauté.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                Contactez-nous à <a href="mailto:nellahouseconsulting@gmail.com" className="text-primary hover:underline">nellahouseconsulting@gmail.com</a> pour tout renseignement.
+                Contactez-nous à <a href="mailto:Ajouter au panier" className="text-primary hover:underline">Ajouter au panier</a> pour tout renseignement.
               </p>
             </div>
             <div className="bg-gradient-to-br from-primary/10 to-accent/20 rounded-2xl p-8 text-center">

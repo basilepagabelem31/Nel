@@ -1,36 +1,91 @@
 // Chemin : app/dashboard/notifications/page.tsx
+"use client"
 
-import { Bell, Mail, Smartphone, BellDot } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { createClient } from "@/lib/supabase/server"
-import { MarkNotificationsRead } from "@/components/dashboard/mark-notifications-read"
+import { useEffect, useState } from "react"
+import { Bell, CheckCheck, Mail, Smartphone, Globe } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { createClient } from "@/lib/supabase/client"
+import { formatDistanceToNow } from "date-fns"
+import { fr } from "date-fns/locale"
+import { toast } from "sonner"
 
-export const metadata = {
-  title: "Notifications",
+interface Notification {
+  id: string
+  type: "email" | "sms" | "in_app"
+  subject: string
+  content: string
+  is_read: boolean
+  created_at: string
 }
 
-export default async function NotificationsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+export default function NotificationsPage() {
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const { data: notifications } = await supabase
-    .from("notifications")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(50)
+  useEffect(() => {
+    loadNotifications()
+  }, [])
 
-  const unreadCount = notifications?.filter(n => !n.is_read).length || 0
+  async function loadNotifications() {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-  const typeIcon = (type: string) => {
-    switch (type) {
-      case "email": return <Mail className="h-5 w-5 text-blue-500" />
-      case "sms": return <Smartphone className="h-5 w-5 text-green-500" />
-      default: return <Bell className="h-5 w-5 text-primary" />
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    const { data } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+
+    setNotifications(data || [])
+    setLoading(false)
+  }
+
+  async function markAsRead(notificationId: string) {
+    const supabase = createClient()
+    const { error } = await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("id", notificationId)
+
+    if (!error) {
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId ? { ...n, is_read: true } : n
+        )
+      )
     }
   }
+
+  async function markAllAsRead() {
+    const supabase = createClient()
+    const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id)
+
+    for (const id of unreadIds) {
+      await supabase.from("notifications").update({ is_read: true }).eq("id", id)
+    }
+
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+    toast.success("Toutes les notifications ont été marquées comme lues")
+  }
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "email":
+        return <Mail className="h-5 w-5" />
+      case "sms":
+        return <Smartphone className="h-5 w-5" />
+      default:
+        return <Globe className="h-5 w-5" />
+    }
+  }
+
+  const unreadCount = notifications.filter(n => !n.is_read).length
 
   return (
     <div className="space-y-6">
@@ -38,57 +93,72 @@ export default async function NotificationsPage() {
         <div>
           <h1 className="text-2xl font-bold">Notifications</h1>
           <p className="text-muted-foreground">
-            {unreadCount > 0 ? `${unreadCount} non lue(s)` : "Toutes lues"}
+            {unreadCount} notification{unreadCount > 1 ? "s" : ""} non lue{unreadCount > 1 ? "s" : ""}
           </p>
         </div>
         {unreadCount > 0 && (
-          <MarkNotificationsRead userId={user.id} />
+          <Button variant="outline" onClick={markAllAsRead}>
+            <CheckCheck className="h-4 w-4 mr-2" />
+            Tout marquer comme lu
+          </Button>
         )}
       </div>
 
-      {notifications && notifications.length > 0 ? (
+      {loading ? (
+        <div className="text-center py-12">
+          <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+          <p className="text-muted-foreground">Chargement des notifications...</p>
+        </div>
+      ) : notifications.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center">
+            <Bell className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Aucune notification</h3>
+            <p className="text-muted-foreground">
+              Vous serez notifié ici des mises à jour de vos commandes et consultations
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
         <div className="space-y-3">
-          {notifications.map((notif) => (
-            <Card key={notif.id} className={!notif.is_read ? "border-primary/30 bg-primary/5" : ""}>
+          {notifications.map((notification) => (
+            <Card
+              key={notification.id}
+              className={`transition-colors ${!notification.is_read ? "border-primary/50 bg-primary/5" : ""}`}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    {typeIcon(notif.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
+                  <div className="mt-0.5">{getIcon(notification.type)}</div>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between">
                       <div>
-                        {notif.subject && (
-                          <p className="font-medium text-sm">{notif.subject}</p>
-                        )}
-                        <p className="text-sm text-muted-foreground mt-0.5">{notif.content}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {new Date(notif.created_at).toLocaleDateString("fr-FR", {
-                            day: "numeric", month: "long", year: "numeric",
-                            hour: "2-digit", minute: "2-digit"
-                          })}
+                        <h3 className="font-semibold">{notification.subject}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {notification.content}
                         </p>
                       </div>
-                      {!notif.is_read && (
-                        <div className="w-2 h-2 bg-primary rounded-full shrink-0 mt-1" />
+                      {!notification.is_read && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => markAsRead(notification.id)}
+                        >
+                          Marquer comme lu
+                        </Button>
                       )}
                     </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {formatDistanceToNow(new Date(notification.created_at), {
+                        addSuffix: true,
+                        locale: fr,
+                      })}
+                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      ) : (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <Bell className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Aucune notification</h3>
-            <p className="text-muted-foreground">
-              Vous serez notifié des mises à jour de vos commandes et consultations
-            </p>
-          </CardContent>
-        </Card>
       )}
     </div>
   )

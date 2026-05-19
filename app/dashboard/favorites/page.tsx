@@ -1,37 +1,109 @@
+// Chemin : app/dashboard/favorites/page.tsx
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Heart, ShoppingBag, Trash2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/client"
+import { addToCart } from "@/lib/actions/cart"
+import { toggleFavorite } from "@/lib/actions/favorites"
 
-export const metadata = {
-  title: "Mes favoris",
-}
+import { toast } from "sonner"
 
-export default async function FavoritesPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export default function FavoritesPage() {
+  const [favorites, setFavorites] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [addingIds, setAddingIds] = useState<Set<string>>(new Set())
 
-  if (!user) return null
+  useEffect(() => {
+    loadFavorites()
+  }, [])
 
-  const { data: favorites } = await supabase
-    .from("favorites")
-    .select(`
-      id,
-      created_at,
-      products (
+  async function loadFavorites() {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    const { data } = await supabase
+      .from("favorites")
+      .select(`
         id,
-        name,
-        slug,
-        base_price,
-        discount_price,
-        stock_quantity,
-        product_images (url, alt_text, is_primary)
-      )
-    `)
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+        created_at,
+        products (
+          id,
+          name,
+          slug,
+          base_price,
+          discount_price,
+          stock_quantity,
+          product_images (url, alt_text, is_primary)
+        )
+      `)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+
+    setFavorites(data || [])
+    setLoading(false)
+  }
+
+  const handleAddToCart = async (productId: string, productName: string) => {
+    setAddingIds(prev => new Set(prev).add(productId))
+    const result = await addToCart(productId, 1)
+    
+    if (result.error) {
+      toast.error(result.error)
+    } else {
+      toast.success(`${productName} ajouté au panier !`)
+    }
+    
+    setAddingIds(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(productId)
+      return newSet
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Mes favoris</h1>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <div className="aspect-[3/4] bg-muted rounded-t-xl" />
+              <CardContent className="p-4 space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-4 bg-muted rounded w-1/2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+
+
+  const handleRemoveFavorite = async (favoriteId: string, productId: string, productName: string) => {
+  const result = await toggleFavorite(productId)
+  if (result.error) {
+    toast.error(result.error)
+  } else {
+    toast.success(`${productName} retiré des favoris`)
+    // Recharger la liste
+    loadFavorites()
+  }
+}
 
   return (
     <div className="space-y-6">
@@ -51,6 +123,7 @@ export default async function FavoritesPage() {
             const primaryImage = product.product_images?.find((img: any) => img.is_primary) || product.product_images?.[0]
             const hasDiscount = product.discount_price && product.discount_price < product.base_price
             const isInStock = product.stock_quantity > 0
+            const isAdding = addingIds.has(product.id)
 
             return (
               <Card key={favorite.id} className="group overflow-hidden">
@@ -72,13 +145,14 @@ export default async function FavoritesPage() {
                     </div>
                   )}
 
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+<Button
+  size="icon"
+  variant="secondary"
+  className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+  onClick={() => handleRemoveFavorite(favorite.id, product.id, product.name)}
+>
+  <Trash2 className="h-4 w-4 text-destructive" />
+</Button>
                 </div>
 
                 <CardContent className="p-4">
@@ -103,10 +177,11 @@ export default async function FavoritesPage() {
 
                   <Button 
                     className="w-full mt-4 gap-2" 
-                    disabled={!isInStock}
+                    disabled={!isInStock || isAdding}
+                    onClick={() => handleAddToCart(product.id, product.name)}
                   >
                     <ShoppingBag className="h-4 w-4" />
-                    {isInStock ? "Ajouter au panier" : "Indisponible"}
+                    {isAdding ? "Ajout..." : (isInStock ? "Ajouter au panier" : "Indisponible")}
                   </Button>
                 </CardContent>
               </Card>
@@ -119,10 +194,10 @@ export default async function FavoritesPage() {
             <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Aucun favori</h3>
             <p className="text-muted-foreground mb-6">
-              Ajoutez des articles a vos favoris pour les retrouver facilement
+              Ajoutez des articles à vos favoris pour les retrouver facilement
             </p>
             <Link href="/catalogue">
-              <Button>Decouvrir la boutique</Button>
+              <Button>Découvrir la boutique</Button>
             </Link>
           </CardContent>
         </Card>

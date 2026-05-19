@@ -39,13 +39,13 @@ export default async function AdminConsultationsPage() {
       .select(`
         *,
         profiles!consultations_client_id_fkey (first_name, last_name, email),
-        advisor:profiles!consultations_advisor_id_fkey (first_name, last_name)
+        conseiller:profiles!consultations_advisor_id_fkey (first_name, last_name)
       `)
       .order("created_at", { ascending: false }),
     supabase
       .from("profiles")
       .select("id, first_name, last_name")
-      .eq("role", "advisor")
+      .eq("role", "conseiller")
   ])
 
   const pendingCount = consultations?.filter(c => c.status === "pending").length || 0
@@ -131,7 +131,7 @@ export default async function AdminConsultationsPage() {
                 consultations.map((c) => {
                   const status = statusConfig[c.status] || statusConfig.pending
                   const client = c.profiles as any
-                  const advisor = c.advisor as any
+                  const conseiller = c.conseiller as any
 
                   return (
                     <TableRow key={c.id}>
@@ -146,7 +146,7 @@ export default async function AdminConsultationsPage() {
                         {c.budget ? `${Number(c.budget).toFixed(0)} EUR` : "-"}
                       </TableCell>
                       <TableCell>
-                        {advisor ? `${advisor.first_name} ${advisor.last_name}` : (
+                        {conseiller ? `${conseiller.first_name} ${conseiller.last_name}` : (
                           <span className="text-muted-foreground text-sm">Non assigné</span>
                         )}
                       </TableCell>

@@ -1,3 +1,4 @@
+
 // Chemin : app/dashboard/loyalty/page.tsx
 
 import { Gift, Star, TrendingUp, Clock } from "lucide-react"

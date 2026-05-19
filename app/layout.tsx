@@ -1,9 +1,15 @@
+// Chemin : app/layout.tsx
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { CartProvider } from "@/lib/context/cart-context"
+import { Header } from "@/components/layout/header"
+import { Footer } from "@/components/layout/footer"
+import { Toaster } from "@/components/ui/sonner"
+
 import './globals.css'
 
-const geist = Geist({ 
+const geistSans = Geist({ 
   subsets: ["latin"],
   variable: "--font-geist-sans"
 })
@@ -18,8 +24,8 @@ export const metadata: Metadata = {
     default: 'Nella@House Consulting - Mode Africaine Premium',
     template: '%s | Nella@House'
   },
-  description: 'Decouvrez notre collection exclusive de mode africaine. Robes, ensembles, accessoires et tenues de mariage inspires des traditions africaines.',
-  keywords: ['mode africaine', 'vetements africains', 'ankara', 'kente', 'wax', 'boubou', 'mariage africain'],
+  description: 'Découvrez notre collection exclusive de mode africaine. Robes, ensembles, accessoires et tenues de mariage inspirés des traditions africaines.',
+  keywords: ['mode africaine', 'vêtements africains', 'ankara', 'kente', 'wax', 'boubou', 'mariage africain'],
   authors: [{ name: 'Nella@House Consulting' }],
   creator: 'Nella@House Consulting',
   openGraph: {
@@ -69,9 +75,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="fr" className={`${geist.variable} ${geistMono.variable}`}>
-      <body className="font-sans antialiased bg-background">
-        {children}
+    <html lang="fr" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="font-sans antialiased bg-background flex flex-col min-h-screen">
+        <CartProvider>
+          {/* <Header /> */}
+          <main className="flex-1">
+            {children}
+          </main>
+          {/* <Footer /> */}
+          <Toaster richColors position="top-right" />
+        </CartProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

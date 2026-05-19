@@ -12,9 +12,9 @@ const footerLinks = {
     { name: "Mariage", href: "/catalogue?category=mariage" },
   ],
   services: [
-    { name: "Consultation Personnalisee", href: "/consultation" },
+    { name: "Consultation Personnalisée", href: "/consultation" },
     { name: "Sur Mesure", href: "/sur-mesure" },
-    { name: "Programme Fidelite", href: "/fidelite" },
+    { name: "Programme Fidélité", href: "/fidelite" },
     { name: "Carte Cadeau", href: "/carte-cadeau" },
   ],
   aide: [
@@ -25,9 +25,9 @@ const footerLinks = {
     { name: "Contact", href: "/contact" },
   ],
   legal: [
-    { name: "Mentions Legales", href: "/mentions-legales" },
+    { name: "Mentions Légales", href: "/mentions-legales" },
     { name: "CGV", href: "/cgv" },
-    { name: "Politique de Confidentialite", href: "/confidentialite" },
+    { name: "Politique de Confidentialité", href: "/confidentialite" },
   ],
 }
 
@@ -38,9 +38,9 @@ export function Footer() {
       <div className="border-b border-sidebar-border">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-2xl mx-auto text-center">
-            <h3 className="text-2xl font-bold mb-2">Rejoignez la communaute Nella@House</h3>
+            <h3 className="text-2xl font-bold mb-2">Rejoignez la communauté Nella@House</h3>
             <p className="text-sidebar-foreground/70 mb-6">
-              Inscrivez-vous pour recevoir nos offres exclusives et decouvrir nos nouvelles collections en avant-premiere.
+              Inscrivez-vous pour recevoir nos offres exclusives et découvrir nos nouvelles collections en avant-première.
             </p>
             <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <Input
@@ -49,7 +49,7 @@ export function Footer() {
                 className="bg-sidebar-accent border-sidebar-border text-sidebar-foreground placeholder:text-sidebar-foreground/50"
               />
               <Button className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">
-                {"S'inscrire"}
+                S'inscrire
               </Button>
             </form>
           </div>
@@ -70,7 +70,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sidebar-foreground/70 text-sm mb-4">
-              Mode africaine authentique et contemporaine. Celebrez votre heritage avec elegance.
+              Mode africaine authentique et contemporaine. Célébrez votre héritage avec élégance.
             </p>
             <div className="flex gap-3">
               <a href="#" className="w-9 h-9 bg-sidebar-accent rounded-full flex items-center justify-center hover:bg-sidebar-primary transition-colors">
@@ -153,7 +153,7 @@ export function Footer() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-sidebar-foreground/70">
-              © 2024 Nella@House Consulting. Tous droits reserves.
+              © 2025 Nella@House Consulting. Tous droits réservés.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               {footerLinks.legal.map((link) => (

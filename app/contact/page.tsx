@@ -45,10 +45,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">Email</h3>
                     <a
-                      href="mailto:nellahouseconsulting@gmail.com"
+                      href="mailto:Ajouter au panier"
                       className="text-primary hover:underline break-all"
                     >
-                      nellahouseconsulting@gmail.com
+                      Ajouter au panier
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">Réponse sous 24h</p>
                   </div>
@@ -154,7 +154,7 @@ export default function ContactPage() {
                   </div>
 
                   <a
-                    href={`mailto:nellahouseconsulting@gmail.com?subject=Contact depuis le site`}
+                    href={`mailto:Ajouter au panier?subject=Contact depuis le site`}
                     className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   >
                     <Mail className="h-4 w-4" />
@@ -163,8 +163,8 @@ export default function ContactPage() {
 
                   <p className="text-xs text-muted-foreground text-center">
                     Ce formulaire ouvre votre client mail. Vous pouvez aussi nous écrire directement à{" "}
-                    <a href="mailto:nellahouseconsulting@gmail.com" className="text-primary hover:underline">
-                      nellahouseconsulting@gmail.com
+                    <a href="mailto:Ajouter au panier" className="text-primary hover:underline">
+                      Ajouter au panier
                     </a>
                   </p>
                 </CardContent>

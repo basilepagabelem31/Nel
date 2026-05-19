@@ -1,7 +1,7 @@
 // Chemin : components/admin/category-actions.tsx
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -73,27 +72,42 @@ export function CategoryActions({ category, allCategories }: CategoryActionsProp
   const [form, setForm] = useState({
     name: category.name,
     description: category.description || "",
-    parent_id: category.parent_id || "none",
+    parent_id: category.parent_id || "none", // Changé: utiliser "none" au lieu de ""
     sort_order: category.sort_order,
     is_active: category.is_active,
   })
 
+  // Mettre à jour le formulaire quand la catégorie change
+  useEffect(() => {
+    setForm({
+      name: category.name,
+      description: category.description || "",
+      parent_id: category.parent_id || "none", // Changé: utiliser "none" au lieu de ""
+      sort_order: category.sort_order,
+      is_active: category.is_active,
+    })
+  }, [category])
+
   const handleEdit = () => {
     startTransition(async () => {
       const supabase = createClient()
+      
+      const newSlug = form.name !== category.name ? slugify(form.name) : category.slug
+      
       const { error } = await supabase
         .from("categories")
         .update({
           name: form.name,
-          slug: slugify(form.name),
+          slug: newSlug,
           description: form.description || null,
-          parent_id: form.parent_id === "none" ? null : form.parent_id,
+          parent_id: form.parent_id === "none" ? null : form.parent_id, // Convertir "none" en null
           sort_order: form.sort_order,
           is_active: form.is_active,
         })
         .eq("id", category.id)
 
       if (error) {
+        console.error("Erreur:", error)
         toast.error("Erreur lors de la modification")
         return
       }
@@ -107,13 +121,27 @@ export function CategoryActions({ category, allCategories }: CategoryActionsProp
   const handleDelete = () => {
     startTransition(async () => {
       const supabase = createClient()
+      
+      // Vérifier si la catégorie a des produits
+      const { count } = await supabase
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .eq("category_id", category.id)
+
+      if (count && count > 0) {
+        toast.error(`Impossible de supprimer: ${count} produit(s) lié(s) à cette catégorie`)
+        setDeleteOpen(false)
+        return
+      }
+
       const { error } = await supabase
         .from("categories")
         .delete()
         .eq("id", category.id)
 
       if (error) {
-        toast.error("Impossible de supprimer (des produits y sont peut-être liés)")
+        console.error("Erreur:", error)
+        toast.error("Impossible de supprimer cette catégorie")
         return
       }
 
@@ -151,7 +179,7 @@ export function CategoryActions({ category, allCategories }: CategoryActionsProp
 
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Modifier la catégorie</DialogTitle>
           </DialogHeader>
@@ -184,6 +212,9 @@ export function CategoryActions({ category, allCategories }: CategoryActionsProp
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Les sous-catégories apparaissent dans le menu déroulant.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label>Ordre d'affichage</Label>
@@ -216,8 +247,8 @@ export function CategoryActions({ category, allCategories }: CategoryActionsProp
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la catégorie ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. La catégorie <strong>{category.name}</strong> sera supprimée définitivement.
-              Les produits liés auront leur catégorie mise à null.
+              Êtes-vous sûr de vouloir supprimer la catégorie <strong>"{category.name}"</strong> ?
+              Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -227,7 +258,7 @@ export function CategoryActions({ category, allCategories }: CategoryActionsProp
               onClick={handleDelete}
               disabled={isPending}
             >
-              Supprimer
+              {isPending ? "Suppression..." : "Supprimer"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

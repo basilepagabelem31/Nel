@@ -1,3 +1,4 @@
+// Chemin : app/dashboard/layout.tsx
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
@@ -15,12 +16,24 @@ export default async function DashboardLayout({
     redirect("/auth/login")
   }
 
-  // Get user profile
+  // Get user profile avec le rôle
   const { data: profile } = await supabase
     .from("profiles")
-    .select("*")
+    .select("*, role")
     .eq("id", user.id)
     .single()
+
+  const role = profile?.role || "client"
+
+  // 🔥 REDIRECTION AUTOMATIQUE SELON LE RÔLE
+  if (role === "admin" || role === "gestionnaire") {
+    redirect("/admin")
+  }
+  
+  // Optionnel : rediriger les conseillers vers leur espace
+  if (role === "conseiller") {
+    redirect("/conseiller")
+  }
 
   return (
     <div className="min-h-screen bg-muted/30">

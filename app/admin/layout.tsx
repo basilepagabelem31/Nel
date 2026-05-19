@@ -1,3 +1,4 @@
+// Chemin : app/admin/layout.tsx
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
@@ -15,22 +16,25 @@ export default async function AdminLayout({
     redirect("/auth/login")
   }
 
-  // Check if user is admin
+  // ✅ CORRECTION : Sélectionner tous les champs nécessaires
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, first_name, last_name")  // ← Ajoutez first_name et last_name
     .eq("id", user.id)
     .single()
 
-  if (!profile || !["admin", "gestionnaire"].includes(profile.role)) {
+  const role = profile?.role || "client"
+
+  // Autoriser admin et gestionnaire seulement
+  if (role !== "admin" && role !== "gestionnaire") {
     redirect("/dashboard")
   }
 
   return (
     <div className="min-h-screen bg-sidebar">
-      <AdminSidebar />
+      <AdminSidebar userRole={role} />
       <div className="lg:ml-64">
-        <AdminHeader user={user} />
+        <AdminHeader user={user} profile={profile} />
         <main className="p-6 bg-background min-h-[calc(100vh-65px)] rounded-tl-3xl">
           {children}
         </main>

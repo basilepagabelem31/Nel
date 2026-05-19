@@ -1,7 +1,7 @@
 // Chemin : components/checkout/checkout-form.tsx
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import { CreditCard, Smartphone, Building2, Wallet } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { createOrder } from "@/lib/actions/orders"
+import { createPendingOrder } from "@/lib/actions/orders"
 import { toast } from "sonner"
 
 interface CheckoutFormProps {
@@ -30,30 +30,61 @@ export function CheckoutForm({ cartItems, addresses, profile, userId, cartId, su
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "paypal" | "mobile_money" | "bank_transfer">("stripe")
   const [notes, setNotes] = useState("")
   const [promoCode, setPromoCode] = useState("")
-  const [isPending, startTransition] = useTransition()
+  const [loading, setLoading] = useState(false)
 
   const shipping = subtotal >= 100 ? 0 : 9.99
   const total = subtotal + shipping
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedAddress && addresses.length > 0) {
       toast.error("Veuillez sélectionner une adresse de livraison")
       return
     }
 
-    startTransition(async () => {
-      const result = await createOrder({
-        addressId: selectedAddress,
-        cartId,
-        promoCode: promoCode || undefined,
-        notes: notes || undefined,
-        paymentMethod,
-      })
+    setLoading(true)
 
-      if (result?.error) {
-        toast.error(result.error)
+    try {
+      if (paymentMethod === "stripe") {
+        // 1. Créer la commande en attente
+        const { orderId, orderNumber, totalAmount, items } = await createPendingOrder({
+          addressId: selectedAddress,
+          cartId,
+          promoCode: promoCode || undefined,
+          notes: notes || undefined,
+        })
+
+        // 2. Appeler Stripe
+        const response = await fetch("/api/create-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId,
+            orderNumber,
+            items: items.map((item) => ({
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              image: item.image,
+            })),
+            totalAmount,
+            email: profile.email,
+          }),
+        })
+
+        const { url, error } = await response.json()
+        if (error) throw new Error(error)
+
+        // Redirection Stripe
+        window.location.href = url
+      } else {
+        // Pour les autres modes de paiement (à implémenter plus tard)
+        toast.info("Paiement par " + paymentMethod + " sera disponible prochainement")
+        setLoading(false)
       }
-    })
+    } catch (err: any) {
+      toast.error(err.message || "Une erreur est survenue")
+      setLoading(false)
+    }
   }
 
   const paymentOptions = [
@@ -212,9 +243,9 @@ export function CheckoutForm({ cartItems, addresses, profile, userId, cartId, su
               className="w-full"
               size="lg"
               onClick={handleSubmit}
-              disabled={isPending || (addresses.length > 0 && !selectedAddress)}
+              disabled={loading || (addresses.length > 0 && !selectedAddress)}
             >
-              {isPending ? "Traitement en cours..." : "Confirmer la commande"}
+              {loading ? "Redirection Stripe..." : "Confirmer la commande"}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">

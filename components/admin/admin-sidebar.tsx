@@ -12,35 +12,53 @@ import {
   Settings,
   BarChart3,
   Tag,
-  LogOut
+  LogOut,
+  Gift,
+  Star
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
-const navigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Produits", href: "/admin/products", icon: Package },
-  { name: "Categories", href: "/admin/categories", icon: FolderTree },
-  { name: "Commandes", href: "/admin/orders", icon: ShoppingCart },
-  { name: "Clients", href: "/admin/users", icon: Users },
-  { name: "Consultations", href: "/admin/consultations", icon: MessageSquare },
-  { name: "Codes Promo", href: "/admin/promo-codes", icon: Tag },
-  { name: "Statistiques", href: "/admin/analytics", icon: BarChart3 },
-  { name: "Parametres", href: "/admin/settings", icon: Settings },
-]
+interface AdminSidebarProps {
+  userRole?: string
+}
 
-export function AdminSidebar() {
+export function AdminSidebar({ userRole = "admin" }: AdminSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+
+  const isGestionnaire = userRole === "gestionnaire"
+  const isAdmin = userRole === "admin"
+
+  // Navigation avec permissions par rôle
+  const allNavigation = [
+    { name: "Dashboard", href: "/admin", icon: LayoutDashboard, allowed: ["admin", "gestionnaire"] },
+    { name: "Produits", href: "/admin/products", icon: Package, allowed: ["admin", "gestionnaire"] },
+    { name: "Catégories", href: "/admin/categories", icon: FolderTree, allowed: ["admin", "gestionnaire"] },
+    { name: "Commandes", href: "/admin/orders", icon: ShoppingCart, allowed: ["admin", "gestionnaire"] },
+    { name: "Consultations", href: "/admin/consultations", icon: MessageSquare, allowed: ["admin", "gestionnaire"] },
+    { name: "Codes Promo", href: "/admin/promo-codes", icon: Tag, allowed: ["admin", "gestionnaire"] },
+    { name: "Avis", href: "/admin/reviews", icon: Star, allowed: ["admin", "gestionnaire"] },
+    { name: "Statistiques", href: "/admin/analytics", icon: BarChart3, allowed: ["admin", "gestionnaire"] },
+    { name: "Users", href: "/admin/users", icon: Users, allowed: ["admin"] }, // Seul admin
+    { name: "Fidélité", href: "/admin/loyalty", icon: Gift, allowed: ["admin", "gestionnaire"] },
+    { name: "Paramètres", href: "/admin/settings", icon: Settings, allowed: ["admin"] },
+  ]
+
+  const navigation = allNavigation.filter(item => item.allowed.includes(userRole))
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push("/")
     router.refresh()
   }
+
+  // Label du rôle en français
+  const roleLabel = userRole === "admin" ? "Administrateur" : "Gestionnaire"
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar text-sidebar-foreground hidden lg:block">
@@ -53,7 +71,7 @@ export function AdminSidebar() {
             </div>
             <div>
               <span className="font-bold text-lg">Nella@House</span>
-              <p className="text-xs text-sidebar-foreground/60">Administration</p>
+              <p className="text-xs text-sidebar-foreground/60">{roleLabel}</p>
             </div>
           </Link>
         </div>
@@ -96,7 +114,7 @@ export function AdminSidebar() {
             onClick={handleSignOut}
           >
             <LogOut className="h-4 w-4" />
-            Deconnexion
+            Déconnexion
           </Button>
         </div>
       </div>

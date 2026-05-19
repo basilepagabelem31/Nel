@@ -17,26 +17,46 @@ interface EditProductPageProps {
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
   const { id } = await params
+  
+  console.log("🔍 [EditProductPage] ID reçu:", id)
+  
+  // Vérifier si l'ID est valide
+  if (!id || id === "undefined" || id === "null") {
+    console.log("❌ [EditProductPage] ID invalide")
+    return notFound()
+  }
+  
   const supabase = await createClient()
 
-  const [{ data: product }, { data: categories }] = await Promise.all([
-    supabase
-      .from("products")
-      .select(`
-        *,
-        product_images (*),
-        product_variants (*)
-      `)
-      .eq("id", id)
-      .single(),
-    supabase
-      .from("categories")
-      .select("id, name, slug")
-      .eq("is_active", true)
-      .order("name"),
-  ])
+  // Récupérer le produit séparément pour mieux debug
+  const { data: product, error: productError } = await supabase
+    .from("products")
+    .select(`
+      *,
+      product_images (*),
+      product_variants (*)
+    `)
+    .eq("id", id)
+    .single()
 
-  if (!product) notFound()
+  if (productError) {
+    console.log("❌ [EditProductPage] Erreur produit:", productError.message)
+    console.log("🔍 [EditProductPage] ID recherché:", id)
+    return notFound()
+  }
+
+  if (!product) {
+    console.log("❌ [EditProductPage] Produit non trouvé pour ID:", id)
+    return notFound()
+  }
+
+  console.log("✅ [EditProductPage] Produit trouvé:", product.name)
+
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("id, name, slug")
+    .eq("is_active", true)
+    .order("name")
 
   return (
     <div className="space-y-6 max-w-4xl">

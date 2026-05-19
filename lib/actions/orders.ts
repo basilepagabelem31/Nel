@@ -226,3 +226,141 @@ export async function updateOrderStatus(orderId: string, status: string, trackin
   revalidatePath("/admin/orders")
   return { success: true }
 }
+
+
+
+
+
+
+
+
+
+
+
+// À ajouter dans lib/actions/orders.ts (après updateOrderStatus)
+
+// Créer une commande en attente de paiement (pour Stripe)
+export async function createPendingOrder(formData: {
+  addressId: string
+  cartId: string
+  promoCode?: string
+  notes?: string
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Non autorisé")
+
+  // Récupérer les articles du panier
+  const { data: cartItems } = await supabase
+    .from("cart_items")
+    .select(`
+      *,
+      products (id, name, base_price, discount_price, stock_quantity, product_images(url, is_primary))
+    `)
+    .eq("cart_id", formData.cartId)
+
+  if (!cartItems || cartItems.length === 0) {
+    throw new Error("Panier vide")
+  }
+
+  // Calculer les totaux
+  let subtotal = cartItems.reduce((sum, item) => {
+    const price = item.products?.discount_price || item.products?.base_price || 0
+    return sum + Number(price) * item.quantity
+  }, 0)
+
+  let discountAmount = 0
+  let promoCodeId = null
+
+  // Appliquer le code promo
+  if (formData.promoCode) {
+    const today = new Date().toISOString().split("T")[0]
+    const { data: promo } = await supabase
+      .from("promo_codes")
+      .select("*")
+      .eq("code", formData.promoCode.toUpperCase())
+      .eq("is_active", true)
+      .lte("start_date", today)
+      .gte("end_date", today)
+      .single()
+
+    if (promo) {
+      if (!promo.min_order_amount || subtotal >= promo.min_order_amount) {
+        if (!promo.max_uses || promo.used_count < promo.max_uses) {
+          if (promo.type === "percentage") {
+            discountAmount = (subtotal * promo.value) / 100
+          } else {
+            discountAmount = Math.min(promo.value, subtotal)
+          }
+          promoCodeId = promo.id
+          await supabase
+            .from("promo_codes")
+            .update({ used_count: promo.used_count + 1 })
+            .eq("id", promo.id)
+        }
+      }
+    }
+  }
+
+  const shippingAmount = subtotal - discountAmount >= 100 ? 0 : 9.99
+  const totalAmount = subtotal - discountAmount + shippingAmount
+  const orderNumber = generateOrderNumber()
+
+  // Créer la commande avec status 'pending'
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .insert({
+      order_number: orderNumber,
+      user_id: user.id,
+      address_id: formData.addressId || null,
+      status: "pending",
+      total_amount: totalAmount,
+      discount_amount: discountAmount,
+      shipping_amount: shippingAmount,
+      promo_code_id: promoCodeId,
+      notes: formData.notes || null,
+    })
+    .select("id")
+    .single()
+
+  if (orderError || !order) throw new Error("Impossible de créer la commande")
+
+  // Créer les order_items (sans décrémenter stock)
+  for (const item of cartItems) {
+    const price = item.products?.discount_price || item.products?.base_price || 0
+    await supabase.from("order_items").insert({
+      order_id: order.id,
+      product_id: item.product_id,
+      variant_id: item.variant_id || null,
+      quantity: item.quantity,
+      unit_price: price,
+      total_price: Number(price) * item.quantity,
+    })
+  }
+
+  // Créer le paiement en attente
+  await supabase.from("payments").insert({
+    order_id: order.id,
+    provider: "stripe",
+    amount: totalAmount,
+    currency: "EUR",
+    status: "pending",
+  })
+
+  return {
+    orderId: order.id,
+    orderNumber,
+    totalAmount,
+    items: cartItems.map((item) => {
+      const price = item.products?.discount_price || item.products?.base_price || 0
+      const primaryImage = item.products?.product_images?.find((img: any) => img.is_primary) || item.products?.product_images?.[0]
+      return {
+        id: item.product_id,
+        name: item.products?.name,
+        price: Number(price),
+        quantity: item.quantity,
+        image: primaryImage?.url,
+      }
+    }),
+  }
+}

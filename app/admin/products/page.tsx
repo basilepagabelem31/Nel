@@ -1,9 +1,13 @@
+// Chemin : app/admin/products/page.tsx
 import Link from "next/link"
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react"
+import { Plus, Search } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { createClient } from "@/lib/supabase/server"
+import { ProductActions } from "@/components/admin/product-actions"
+
 import {
   Table,
   TableBody,
@@ -12,54 +16,50 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { createClient } from "@/lib/supabase/server"
 
 export const metadata = {
   title: "Gestion des Produits",
 }
 
 export default async function AdminProductsPage() {
-const { data: products } = await supabase
-  .from("products")
-  .select(`
-    id,
-    name,
-    slug,
-    base_price,
-    discount_price,
-    stock_quantity,
-    status,
-    sku,
-    categories (name)
-  `)
-  .order("created_at", { ascending: false }) as { data: Array<{
-    id: string
-    name: string
-    slug: string
-    base_price: number
-    discount_price: number | null
-    stock_quantity: number
-    status: string
-    sku: string
-    categories: { name: string } | null
-  }> | null }
+  const supabase = await createClient()
+
+  const { data: products } = await supabase
+    .from("products")
+    .select(`
+      id,
+      name,
+      slug,
+      base_price,
+      discount_price,
+      stock_quantity,
+      status,
+      sku,
+      created_at,
+      categories (name)
+    `)
+    .order("created_at", { ascending: false })
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "published":
-        return <Badge className="bg-green-100 text-green-800">Publie</Badge>
+        return <Badge className="bg-green-100 text-green-800">Publié</Badge>
       case "draft":
         return <Badge variant="outline">Brouillon</Badge>
       case "archived":
-        return <Badge variant="secondary">Archive</Badge>
+        return <Badge variant="secondary">Archivé</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
+    }
+  }
+
+  const getStockDisplay = (stock: number) => {
+    if (stock > 10) {
+      return <span className="text-green-600 font-medium">{stock}</span>
+    } else if (stock > 0) {
+      return <span className="text-amber-600 font-medium">{stock}</span>
+    } else {
+      return <span className="text-red-600 font-medium">Rupture</span>
     }
   }
 
@@ -69,7 +69,7 @@ const { data: products } = await supabase
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Produits</h1>
-          <p className="text-muted-foreground">Gerez votre catalogue de produits</p>
+          <p className="text-muted-foreground">Gérez votre catalogue de produits</p>
         </div>
         <Link href="/admin/products/new">
           <Button className="gap-2">
@@ -107,7 +107,7 @@ const { data: products } = await supabase
               <TableRow>
                 <TableHead>Produit</TableHead>
                 <TableHead>SKU</TableHead>
-                <TableHead>Categorie</TableHead>
+                <TableHead>Catégorie</TableHead>
                 <TableHead>Prix</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Statut</TableHead>
@@ -116,12 +116,12 @@ const { data: products } = await supabase
             </TableHeader>
             <TableBody>
               {products && products.length > 0 ? (
-                products.map((product) => (
+                products.map((product: any) => (
                   <TableRow key={product.id}>
                     <TableCell>
                       <div className="font-medium">{product.name}</div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="text-muted-foreground font-mono text-sm">
                       {product.sku}
                     </TableCell>
                     <TableCell>
@@ -130,59 +130,35 @@ const { data: products } = await supabase
                     <TableCell>
                       {product.discount_price ? (
                         <div>
-                          <span className="font-medium">{Number(product.discount_price).toFixed(2)} EUR</span>
+                          <span className="font-medium text-primary">
+                            {Number(product.discount_price).toFixed(2)} €
+                          </span>
                           <span className="text-sm text-muted-foreground line-through ml-2">
-                            {Number(product.base_price).toFixed(2)} EUR
+                            {Number(product.base_price).toFixed(2)} €
                           </span>
                         </div>
                       ) : (
-                        <span className="font-medium">{Number(product.base_price).toFixed(2)} EUR</span>
+                        <span className="font-medium">{Number(product.base_price).toFixed(2)} €</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className={product.stock_quantity > 10 
-                        ? "text-green-600" 
-                        : product.stock_quantity > 0 
-                          ? "text-amber-600" 
-                          : "text-red-600"
-                      }>
-                        {product.stock_quantity}
-                      </span>
+                      {getStockDisplay(product.stock_quantity)}
                     </TableCell>
-                    <TableCell>{getStatusBadge(product.status)}</TableCell>
+                    <TableCell>
+                      {getStatusBadge(product.status)}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/produit/${product.slug}`} className="flex items-center gap-2">
-                              <Eye className="h-4 w-4" />
-                              Voir
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/products/${product.id}/edit`} className="flex items-center gap-2">
-                              <Edit className="h-4 w-4" />
-                              Modifier
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <ProductActions 
+                        productId={product.id} 
+                        slug={product.slug} 
+                      />
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    Aucun produit trouve
+                    Aucun produit trouvé
                   </TableCell>
                 </TableRow>
               )}

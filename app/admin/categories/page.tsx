@@ -1,6 +1,6 @@
 // Chemin : app/admin/categories/page.tsx
 
-import { Plus, Edit, Trash2, FolderTree } from "lucide-react"
+import { FolderTree } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +15,7 @@ import {
 import { createClient } from "@/lib/supabase/server"
 import { CategoryActions } from "@/components/admin/category-actions"
 import { AddCategoryDialog } from "@/components/admin/add-category-dialog"
+import Link from "next/link"
 
 export const metadata = {
   title: "Gestion des catégories",
@@ -23,25 +24,28 @@ export const metadata = {
 export default async function AdminCategoriesPage() {
   const supabase = await createClient()
 
+  // Récupérer toutes les catégories avec leur parent
   const { data: categories } = await supabase
     .from("categories")
     .select(`
       *,
-      parent:categories!categories_parent_id_fkey (name)
+      parent:parent_id (name)
     `)
-    .order("sort_order")
+    .order("sort_order", { ascending: true })
 
-  // Count products per category
+  // Compter les produits par catégorie
   const { data: productCounts } = await supabase
     .from("products")
     .select("category_id")
 
-  const countMap = (productCounts || []).reduce((acc: Record<string, number>, p) => {
-    if (p.category_id) {
-      acc[p.category_id] = (acc[p.category_id] || 0) + 1
+  const countMap: Record<string, number> = {}
+  if (productCounts) {
+    for (const p of productCounts) {
+      if (p.category_id) {
+        countMap[p.category_id] = (countMap[p.category_id] || 0) + 1
+      }
     }
-    return acc
-  }, {})
+  }
 
   return (
     <div className="space-y-6">
@@ -56,7 +60,7 @@ export default async function AdminCategoriesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Toutes les catégories</CardTitle>
-          <CardDescription>{categories?.length || 0} catégories</CardDescription>
+          <CardDescription>{categories?.length || 0} catégorie(s) au total</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -85,30 +89,32 @@ export default async function AdminCategoriesPage() {
                       {cat.slug}
                     </TableCell>
                     <TableCell>
-                      {(cat.parent as any)?.name || (
-                        <span className="text-muted-foreground">—</span>
+                      {cat.parent ? (
+                        <Badge variant="outline">{cat.parent.name}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Racine</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{countMap[cat.id] || 0} produits</Badge>
+                      <Badge variant="secondary">{countMap[cat.id] || 0} produit(s)</Badge>
                     </TableCell>
                     <TableCell>{cat.sort_order}</TableCell>
                     <TableCell>
                       {cat.is_active ? (
                         <Badge className="bg-green-100 text-green-800">Active</Badge>
                       ) : (
-                        <Badge variant="secondary">Inactive</Badge>
+                        <Badge variant="destructive">Inactive</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <CategoryActions category={cat} allCategories={categories} />
+                      <CategoryActions category={cat} allCategories={categories || []} />
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    Aucune catégorie. Créez-en une pour commencer.
+                    Aucune catégorie. Cliquez sur "Nouvelle catégorie" pour commencer.
                   </TableCell>
                 </TableRow>
               )}

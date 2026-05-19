@@ -1,3 +1,4 @@
+// Chemin : components/product/product-info.tsx
 "use client"
 
 import { useState } from "react"
@@ -8,6 +9,10 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { addToCart } from "@/lib/actions/cart"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import { toggleFavorite } from "@/lib/actions/favorites"
 
 interface ProductInfoProps {
   product: {
@@ -30,12 +35,17 @@ interface ProductInfoProps {
       stock_quantity: number
     }[]
   }
+  initialIsFavorite?: boolean
 }
 
-export function ProductInfo({ product }: ProductInfoProps) {
+export function ProductInfo({ product, initialIsFavorite = false }: ProductInfoProps) {
+  const router = useRouter()
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false)
 
   const hasDiscount = product.discount_price && product.discount_price < product.base_price
   const discountPercent = hasDiscount
@@ -55,6 +65,40 @@ export function ProductInfo({ product }: ProductInfoProps) {
     : product.base_price + (selectedVariant?.additional_price || 0)
 
   const isInStock = product.stock_quantity > 0 || (selectedVariant?.stock_quantity || 0) > 0
+
+  const handleAddToCart = async (redirectAfterAdd: boolean = false) => {
+    if (!isInStock) {
+      toast.error("Ce produit est en rupture de stock")
+      return
+    }
+
+    setIsAddingToCart(true)
+    const result = await addToCart(product.id, quantity, selectedVariant?.id, redirectAfterAdd)
+    
+    if (result.error) {
+      if (result.redirectToLogin) {
+        toast.error("Veuillez vous connecter")
+        router.push("/auth/login")
+      } else {
+        toast.error(result.error)
+      }
+    } else {
+      toast.success(`${product.name} ajouté au panier !`)
+    }
+    setIsAddingToCart(false)
+  }
+
+  const handleToggleFavorite = async () => {
+    setIsTogglingFavorite(true)
+    const result = await toggleFavorite(product.id)
+    if (result.error) {
+      toast.error(result.error)
+    } else {
+      setIsFavorite(result.isFavorite)
+      toast.success(result.isFavorite ? "Ajouté aux favoris" : "Retiré des favoris")
+    }
+    setIsTogglingFavorite(false)
+  }
 
   return (
     <div className="space-y-6">
@@ -176,7 +220,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
       {/* Quantity */}
       <div>
-        <Label className="text-base mb-3 block">Quantite</Label>
+        <Label className="text-base mb-3 block">Quantité</Label>
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
@@ -198,16 +242,36 @@ export function ProductInfo({ product }: ProductInfoProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3">
-        <Button size="lg" className="flex-1 gap-2" disabled={!isInStock}>
-          <ShoppingBag className="h-5 w-5" />
-          Ajouter au panier
-        </Button>
-        <Button size="lg" variant="outline">
-          <Heart className="h-5 w-5" />
-        </Button>
-        <Button size="lg" variant="outline">
-          <Share2 className="h-5 w-5" />
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-3">
+          <Button 
+            size="lg" 
+            className="flex-1 gap-2" 
+            disabled={!isInStock || isAddingToCart}
+            onClick={() => handleAddToCart(false)}
+          >
+            <ShoppingBag className="h-5 w-5" />
+            {isAddingToCart ? "Ajout en cours..." : "Ajouter au panier"}
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline"
+            onClick={handleToggleFavorite}
+            disabled={isTogglingFavorite}
+          >
+            <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+          </Button>
+          <Button size="lg" variant="outline">
+            <Share2 className="h-5 w-5" />
+          </Button>
+        </div>
+        <Button 
+          variant="outline" 
+          className="w-full gap-2"
+          onClick={() => handleAddToCart(true)}
+          disabled={!isInStock || isAddingToCart}
+        >
+          Acheter maintenant
         </Button>
       </div>
 
@@ -217,13 +281,13 @@ export function ProductInfo({ product }: ProductInfoProps) {
           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
             <Truck className="h-5 w-5 text-primary" />
           </div>
-          <p className="text-xs text-muted-foreground">Livraison gratuite des 150EUR</p>
+          <p className="text-xs text-muted-foreground">Livraison gratuite dès 150€</p>
         </div>
         <div className="text-center">
           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
             <Shield className="h-5 w-5 text-primary" />
           </div>
-          <p className="text-xs text-muted-foreground">Paiement securise</p>
+          <p className="text-xs text-muted-foreground">Paiement sécurisé</p>
         </div>
         <div className="text-center">
           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
