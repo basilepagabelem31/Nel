@@ -3,7 +3,8 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { CreditCard, Smartphone, Building2, Wallet } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { CreditCard, Smartphone, Building2, Wallet, Truck, Landmark } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -11,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { createPendingOrder } from "@/lib/actions/orders"
+import { createPendingOrder, createOrderDirect } from "@/lib/actions/orders"
 import { toast } from "sonner"
 
 interface CheckoutFormProps {
@@ -23,17 +24,78 @@ interface CheckoutFormProps {
   subtotal: number
 }
 
+interface PaymentOption {
+  value: string
+  label: string
+  icon: any
+  description: string
+  recommended?: boolean
+  demo?: boolean
+  disabled?: boolean
+}
+
 export function CheckoutForm({ cartItems, addresses, profile, userId, cartId, subtotal }: CheckoutFormProps) {
+  const router = useRouter()
   const [selectedAddress, setSelectedAddress] = useState(
     addresses.find(a => a.is_default)?.id || addresses[0]?.id || ""
   )
-  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "paypal" | "mobile_money" | "bank_transfer">("stripe")
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash_on_delivery")
   const [notes, setNotes] = useState("")
   const [promoCode, setPromoCode] = useState("")
   const [loading, setLoading] = useState(false)
 
   const shipping = subtotal >= 100 ? 0 : 9.99
   const total = subtotal + shipping
+
+  // Paiement à la livraison
+  const handleCashOnDelivery = async () => {
+    const result = await createOrderDirect({
+      addressId: selectedAddress,
+      cartId,
+      promoCode: promoCode || undefined,
+      notes: notes || undefined,
+      paymentMethod: "cash_on_delivery",
+    })
+
+    if (result.error) {
+      toast.error(result.error)
+      return false
+    }
+    return true
+  }
+
+  // Paiement Stripe (démo)
+  const handleStripePayment = async () => {
+    const { orderId, orderNumber, totalAmount, items } = await createPendingOrder({
+      addressId: selectedAddress,
+      cartId,
+      promoCode: promoCode || undefined,
+      notes: notes || undefined,
+    })
+
+    const response = await fetch("/api/create-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        orderId,
+        orderNumber,
+        items: items.map((item) => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        })),
+        totalAmount,
+        email: profile.email,
+      }),
+    })
+
+    const { url, error } = await response.json()
+    if (error) throw new Error(error)
+    
+    window.location.href = url
+    return true
+  }
 
   const handleSubmit = async () => {
     if (!selectedAddress && addresses.length > 0) {
@@ -44,55 +106,44 @@ export function CheckoutForm({ cartItems, addresses, profile, userId, cartId, su
     setLoading(true)
 
     try {
+      let success = false
+      
       if (paymentMethod === "stripe") {
-        // 1. Créer la commande en attente
-        const { orderId, orderNumber, totalAmount, items } = await createPendingOrder({
-          addressId: selectedAddress,
-          cartId,
-          promoCode: promoCode || undefined,
-          notes: notes || undefined,
-        })
+        success = await handleStripePayment()
+      } else if (paymentMethod === "cash_on_delivery") {
+        success = await handleCashOnDelivery()
+      }
 
-        // 2. Appeler Stripe
-        const response = await fetch("/api/create-checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId,
-            orderNumber,
-            items: items.map((item) => ({
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity,
-              image: item.image,
-            })),
-            totalAmount,
-            email: profile.email,
-          }),
-        })
-
-        const { url, error } = await response.json()
-        if (error) throw new Error(error)
-
-        // Redirection Stripe
-        window.location.href = url
-      } else {
-        // Pour les autres modes de paiement (à implémenter plus tard)
-        toast.info("Paiement par " + paymentMethod + " sera disponible prochainement")
-        setLoading(false)
+      if (success) {
+        toast.success("Commande confirmée !")
+        router.push("/dashboard/orders")
       }
     } catch (err: any) {
       toast.error(err.message || "Une erreur est survenue")
+    } finally {
       setLoading(false)
     }
   }
 
-  const paymentOptions = [
-    { value: "stripe", label: "Carte bancaire", icon: CreditCard, description: "Visa, Mastercard, etc." },
-    { value: "paypal", label: "PayPal", icon: Wallet, description: "Paiement via votre compte PayPal" },
-    { value: "mobile_money", label: "Mobile Money", icon: Smartphone, description: "Orange Money, Wave, MTN..." },
-    { value: "bank_transfer", label: "Virement bancaire", icon: Building2, description: "Traitement sous 2-3 jours" },
-  ] as const
+  const paymentOptions: PaymentOption[] = [
+    { 
+      value: "cash_on_delivery", 
+      label: "Paiement à la livraison", 
+      icon: Truck, 
+      description: "Payez à la réception de votre commande",
+      recommended: true
+    },
+    { 
+      value: "stripe", 
+      label: "Carte bancaire (Démo)", 
+      icon: CreditCard, 
+      description: "Visa, Mastercard - Mode test",
+      demo: true
+    },
+    { value: "paypal", label: "PayPal", icon: Wallet, description: "Paiement via votre compte PayPal", disabled: true },
+    { value: "mobile_money", label: "Mobile Money", icon: Smartphone, description: "Orange Money, Wave, MTN...", disabled: true },
+    { value: "bank_transfer", label: "Virement bancaire", icon: Landmark, description: "Traitement sous 2-3 jours", disabled: true },
+  ]
 
   return (
     <div className="grid lg:grid-cols-3 gap-8">
@@ -143,16 +194,42 @@ export function CheckoutForm({ cartItems, addresses, profile, userId, cartId, su
           <CardContent>
             <RadioGroup
               value={paymentMethod}
-              onValueChange={(v) => setPaymentMethod(v as any)}
+              onValueChange={(v) => setPaymentMethod(v)}
               className="space-y-3"
             >
               {paymentOptions.map((option) => (
-                <div key={option.value} className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/30">
-                  <RadioGroupItem value={option.value} id={option.value} />
-                  <Label htmlFor={option.value} className="cursor-pointer flex items-center gap-3 flex-1">
+                <div 
+                  key={option.value} 
+                  className={`flex items-center gap-3 p-4 border rounded-lg transition-all
+                    ${option.disabled ? 'opacity-50 cursor-not-allowed bg-muted/20' : 'hover:bg-muted/30 cursor-pointer'}
+                    ${option.recommended ? 'border-primary/50 bg-primary/5' : ''}
+                  `}
+                >
+                  <RadioGroupItem 
+                    value={option.value} 
+                    id={option.value} 
+                    disabled={option.disabled}
+                    className={option.disabled ? 'opacity-50' : ''}
+                  />
+                  <Label 
+                    htmlFor={option.value} 
+                    className={`cursor-pointer flex items-center gap-3 flex-1 ${option.disabled ? 'cursor-not-allowed' : ''}`}
+                  >
                     <option.icon className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="font-medium">{option.label}</p>
+                      <p className="font-medium">
+                        {option.label}
+                        {option.recommended && (
+                          <Badge variant="secondary" className="ml-2 text-xs bg-green-100 text-green-800">
+                            Recommandé
+                          </Badge>
+                        )}
+                        {option.demo && (
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            Démo
+                          </Badge>
+                        )}
+                      </p>
                       <p className="text-xs text-muted-foreground">{option.description}</p>
                     </div>
                   </Label>
@@ -161,9 +238,17 @@ export function CheckoutForm({ cartItems, addresses, profile, userId, cartId, su
             </RadioGroup>
 
             {paymentMethod === "stripe" && (
-              <div className="mt-4 p-4 bg-muted/30 rounded-lg">
-                <p className="text-sm text-muted-foreground text-center">
-                  🔒 Paiement sécurisé — Vous serez redirigé vers Stripe pour finaliser le paiement
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700 text-center">
+                  💳 Mode démo — Utilisez la carte <strong>4242 4242 4242 4242</strong>
+                </p>
+              </div>
+            )}
+
+            {paymentMethod === "cash_on_delivery" && (
+              <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                <p className="text-sm text-green-700 text-center">
+                  🚚 Paiement à la livraison — Vous payez à la réception de votre colis
                 </p>
               </div>
             )}
@@ -211,7 +296,7 @@ export function CheckoutForm({ cartItems, addresses, profile, userId, cartId, su
                       <p className="text-sm font-medium truncate">{product?.name}</p>
                       <p className="text-xs text-muted-foreground">× {item.quantity}</p>
                     </div>
-                    <p className="text-sm font-medium">{(Number(price) * item.quantity).toFixed(2)} EUR</p>
+                    <p className="text-sm font-medium">{(Number(price) * item.quantity).toFixed(2)} €</p>
                   </div>
                 )
               })}
@@ -222,12 +307,12 @@ export function CheckoutForm({ cartItems, addresses, profile, userId, cartId, su
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Sous-total</span>
-                <span>{subtotal.toFixed(2)} EUR</span>
+                <span>{subtotal.toFixed(2)} €</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Livraison</span>
                 <span className={shipping === 0 ? "text-green-600" : ""}>
-                  {shipping === 0 ? "Gratuite" : `${shipping.toFixed(2)} EUR`}
+                  {shipping === 0 ? "Gratuite" : `${shipping.toFixed(2)} €`}
                 </span>
               </div>
             </div>
@@ -236,7 +321,7 @@ export function CheckoutForm({ cartItems, addresses, profile, userId, cartId, su
 
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span>{total.toFixed(2)} EUR</span>
+              <span>{total.toFixed(2)} €</span>
             </div>
 
             <Button
@@ -245,7 +330,7 @@ export function CheckoutForm({ cartItems, addresses, profile, userId, cartId, su
               onClick={handleSubmit}
               disabled={loading || (addresses.length > 0 && !selectedAddress)}
             >
-              {loading ? "Redirection Stripe..." : "Confirmer la commande"}
+              {loading ? "Traitement en cours..." : "Confirmer la commande"}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">

@@ -364,3 +364,103 @@ export async function createPendingOrder(formData: {
     }),
   }
 }
+
+
+
+
+
+
+// Ajoute cette fonction dans lib/actions/orders.ts
+
+// Créer une commande directement (sans Stripe)
+export async function createOrderDirect(formData: {
+  addressId: string
+  cartId: string
+  promoCode?: string
+  notes?: string
+  paymentMethod: string
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Non autorisé" }
+
+  // Récupérer les articles du panier
+  const { data: cartItems } = await supabase
+    .from("cart_items")
+    .select(`
+      *,
+      products (id, name, base_price, discount_price, stock_quantity)
+    `)
+    .eq("cart_id", formData.cartId)
+
+  if (!cartItems || cartItems.length === 0) {
+    return { error: "Panier vide" }
+  }
+
+  // Calculer les totaux (même logique que createOrder)
+  let subtotal = cartItems.reduce((sum, item) => {
+    const price = item.products?.discount_price || item.products?.base_price || 0
+    return sum + Number(price) * item.quantity
+  }, 0)
+
+  let discountAmount = 0
+  let promoCodeId = null
+
+  // Appliquer le code promo si présent
+  if (formData.promoCode) {
+    // ... logique de code promo
+  }
+
+  const shippingAmount = subtotal - discountAmount >= 100 ? 0 : 9.99
+  const totalAmount = subtotal - discountAmount + shippingAmount
+  const orderNumber = generateOrderNumber()
+
+  // Créer la commande
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .insert({
+      order_number: orderNumber,
+      user_id: user.id,
+      address_id: formData.addressId || null,
+      status: "pending",
+      total_amount: totalAmount,
+      discount_amount: discountAmount,
+      shipping_amount: shippingAmount,
+      promo_code_id: promoCodeId,
+      notes: formData.notes || null,
+    })
+    .select("id")
+    .single()
+
+  if (orderError || !order) {
+    return { error: "Impossible de créer la commande" }
+  }
+
+  // Créer les order_items
+  for (const item of cartItems) {
+    const price = item.products?.discount_price || item.products?.base_price || 0
+    await supabase.from("order_items").insert({
+      order_id: order.id,
+      product_id: item.product_id,
+      variant_id: item.variant_id || null,
+      quantity: item.quantity,
+      unit_price: price,
+      total_price: Number(price) * item.quantity,
+    })
+  }
+
+  // Créer le paiement
+  await supabase.from("payments").insert({
+    order_id: order.id,
+    provider: formData.paymentMethod,
+    amount: totalAmount,
+    currency: "EUR",
+    status: "pending",
+  })
+
+  // Vider le panier
+  await supabase.from("cart_items").delete().eq("cart_id", formData.cartId)
+  await supabase.from("carts").delete().eq("id", formData.cartId)
+
+  return { success: true, orderNumber }
+}
