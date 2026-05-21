@@ -24,22 +24,61 @@ export const metadata: Metadata = {
     default: 'Nella@House Consulting - Mode Africaine Premium',
     template: '%s | Nella@House'
   },
-  description: 'Découvrez notre collection exclusive de mode africaine. Robes, ensembles, accessoires et tenues de mariage inspirés des traditions africaines.',
-  keywords: ['mode africaine', 'vêtements africains', 'ankara', 'kente', 'wax', 'boubou', 'mariage africain'],
+  description: 'Découvrez notre collection exclusive de mode africaine. Vêtements, tissus, accessoires et prêt-à-porter. Livraison au Maroc, France et Afrique.',
+  keywords: [
+    'mode africaine',
+    'vêtements africains',
+    'tissus africains',
+    'bazin',
+    'soie africaine',
+    'pagne',
+    'kente',
+    'ankara',
+    'wax',
+    'boubou',
+    'robe africaine',
+    'nellahouse',
+    'nella house',
+    'mode marocaine',
+    'e-commerce afrique',
+    'tenue africaine',
+    'mariage africain'
+  ],
   authors: [{ name: 'Nella@House Consulting' }],
   creator: 'Nella@House Consulting',
+  publisher: 'Nella@House Consulting',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
-    url: 'https://nellahouse.com',
+    url: 'https://www.nellahouseconsulting.com',
     siteName: 'Nella@House Consulting',
     title: 'Nella@House Consulting - Mode Africaine Premium',
-    description: 'Collection exclusive de mode africaine authentique',
+    description: 'Découvrez notre collection exclusive de mode africaine authentique. Livraison rapide.',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Nella@House Consulting - Mode Africaine Premium',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Nella@House Consulting',
     description: 'Mode Africaine Premium',
+    images: ['/og-image.jpg'],
   },
   icons: {
     icon: [
@@ -57,6 +96,13 @@ export const metadata: Metadata = {
       },
     ],
     apple: '/apple-icon.png',
+  },
+  verification: {
+    // À ajouter après inscription à Google Search Console
+    // google: 'TON_CODE_VERIFICATION',
+  },
+  alternates: {
+    canonical: 'https://www.nellahouseconsulting.com',
   },
 }
 
